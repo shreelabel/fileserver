@@ -242,8 +242,8 @@ if ($action === 'stats') {
     $totalFiles=$pdo->query("SELECT COUNT(*) FROM files WHERE deleted_at IS NULL AND uploaded_by={$user['id']}")->fetchColumn();
     $totalFolders=$pdo->query("SELECT COUNT(*) FROM folders WHERE deleted_at IS NULL AND created_by={$user['id']}")->fetchColumn();
     $used=$pdo->query("SELECT COALESCE(SUM(size),0) FROM files WHERE deleted_at IS NULL AND uploaded_by={$user['id']}")->fetchColumn();
-    $cfg=require __DIR__.'/../config/config.php';
-    $quota=$cfg['storage_quota_gb']*1024*1024*1024;
+    $userRow = $pdo->query("SELECT quota_gb FROM users WHERE id={$user['id']}")->fetch();
+    $quota = intval($userRow['quota_gb']) * 1024 * 1024 * 1024;
     // real counts by type for interactive chart (fixes mock data issue)
     $types = ['images'=>0,'pdf'=>0,'docs'=>0,'excel'=>0,'zip'=>0,'other'=>0];
     $rows=$pdo->query("SELECT extension, mime_type, COUNT(*) as cnt FROM files WHERE deleted_at IS NULL AND uploaded_by={$user['id']} GROUP BY extension, mime_type")->fetchAll();

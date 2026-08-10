@@ -165,7 +165,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
         <div class="absolute -right-6 -top-6 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
         <div class="flex items-center justify-between text-xs relative"><span class="opacity-70">Storage</span><span class="mono bg-white/15 px-2 py-1 rounded-full text-[11px]" id="storageBadge">Local</span></div>
         <div class="mt-3 relative">
-          <div class="flex justify-between text-xs mb-1"><span class="opacity-80">Used</span><span id="storageText" class="mono">— / 100 GB</span></div>
+          <div class="flex justify-between text-xs mb-1"><span class="opacity-80">Used</span><span id="storageText" class="mono">— / — GB</span></div>
           <div class="h-2 bg-white/15 rounded-full overflow-hidden"><div id="storageBar" class="h-full bg-gradient-to-r from-indigo-400 to-white rounded-full transition-all duration-700" style="width:12%"></div></div>
           <canvas id="miniStorage" height="48" class="mt-3 w-full !max-h-[48px]"></canvas>
         </div>
@@ -219,7 +219,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
           <div class="relative overflow-hidden bg-white dark:bg-[#1a1d27] rounded-[20px] border dark:border-[#2a2d3a] p-5 card-hover">
             <div class="absolute -right-6 -top-6 w-24 h-24 bg-violet-500/10 rounded-full blur-2xl"></div>
             <div class="flex justify-between relative"><span class="text-sm text-slate-500 dark:text-slate-400">Storage Used</span><span class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white flex items-center justify-center shadow-lg"><i class="bi bi-hdd"></i></span></div>
-            <div id="statUsed" class="text-[28px] font-extrabold mt-3">—</div><div class="text-xs text-slate-400 mt-1">of 100 GB · <span id="storagePct" class="font-semibold text-violet-600">—%</span></div>
+            <div id="statUsed" class="text-[28px] font-extrabold mt-3">—</div><div class="text-xs text-slate-400 mt-1"><span id="statQuotaText">of — GB</span> · <span id="storagePct" class="font-semibold text-violet-600">—%</span></div>
           </div>
           <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-900 dark:from-[#1a1d27] dark:to-violet-900 rounded-[20px] p-5 card-hover text-white border border-slate-800">
             <div class="flex justify-between"><span class="text-sm opacity-70">Available</span><span class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center"><i class="bi bi-cloud-check"></i></span></div>
@@ -548,10 +548,12 @@ async function refreshDashboard(){
   animateValue('statFolders', j.totalFolders);
   const usedGB=(j.used/1024/1024/1024).toFixed(2);
   document.getElementById('statUsed').textContent=usedGB+' GB';
-  document.getElementById('statAvail').textContent=(100 - usedGB).toFixed(1)+' GB';
+  const quotaGB = (j.quota/1024/1024/1024);
+  document.getElementById('statAvail').textContent=(quotaGB - usedGB).toFixed(1)+' GB';
   const pct=Math.min(100, (j.used/j.quota*100)).toFixed(1);
   window._byType=j.byType||{images:0,pdf:0,docs:0,excel:0,zip:0,other:0};
-  document.getElementById('storageText').textContent=usedGB+' GB / 100 GB';
+  document.getElementById('storageText').textContent=usedGB+' GB / '+quotaGB.toFixed(0)+' GB';
+  const sq = document.getElementById('statQuotaText'); if(sq) sq.textContent='of '+quotaGB.toFixed(0)+' GB';
   document.getElementById('storageBar').style.width=pct+'%';
   document.getElementById('storagePct').textContent=pct+'%';
   drawCharts();
