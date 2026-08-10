@@ -23,7 +23,7 @@ if ($action === 'login') {
         // helpful hint: show which DB we checked
         $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
         http_response_code(401);
-        echo json_encode(['ok'=>false,'error'=>'Invalid email or password (no account found in '.$driver.' DB). Run fix-login.php to reset.']);
+        echo json_encode(['ok'=>false,'error'=>'Invalid email or password']);
         exit;
     }
     if (password_verify($pass, $user['password'])) {
@@ -37,7 +37,7 @@ if ($action === 'login') {
         echo json_encode(['ok'=>true,'user'=>$_SESSION['user']]);
     } else {
         http_response_code(401);
-        echo json_encode(['ok'=>false,'error'=>'Invalid email or password (password mismatch). Use fix-login.php → Reset to admin123']);
+        echo json_encode(['ok'=>false,'error'=>'Invalid email or password']);
     }
     exit;
 }
