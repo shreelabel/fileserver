@@ -858,7 +858,7 @@ function openDetails(f){
       <button onclick="previewFile(${f.id})" class="border dark:border-[#2a2d3a] rounded-xl py-2.5 text-sm font-medium hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-eye"></i> Preview</button>
       <a href="api/download.php?id=${f.id}" class="bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-xl py-2.5 text-sm font-medium text-center">Download</a>
       <button onclick="renamePrompt(${f.id},'file')" class="border dark:border-[#2a2d3a] rounded-xl py-2.5 text-sm">Rename</button>
-      ${(IS_ADMIN || f.uploaded_by == CURRENT_USER_ID || f.created_by == CURRENT_USER_ID) ? `<button onclick="deleteItem(${f.id},'file')" class="border dark:border-[#2a2d3a] rounded-xl py-2.5 text-sm text-red-600">Delete</button>` : ''}
+      ${(IS_ADMIN) ? `<button onclick="deleteItem(${f.id},'file')" class="border dark:border-[#2a2d3a] rounded-xl py-2.5 text-sm text-red-600">Delete</button>` : ''}
     </div>`;
 }
 function closeDetails(){ document.getElementById('detailsPanel').classList.add('translate-x-full'); }
@@ -866,7 +866,7 @@ let ctxTarget=null;
 function showCtx(e,id,type,ownerId){
   e.preventDefault(); e.stopPropagation(); ctxTarget={id,type};
   const m=document.getElementById('ctxMenu');
-  const canDelete = IS_ADMIN || ownerId == CURRENT_USER_ID;
+  const canDelete = IS_ADMIN;
   const delHtml = canDelete ? `<div class="border-t dark:border-[#2a2d3a] my-1"></div><button onclick="deleteItem(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950 text-red-600"><i class="bi bi-trash mr-2"></i>Delete</button>` : '';
   m.innerHTML=`<button onclick="previewFile(${id})" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-eye mr-2"></i>Preview</button><button onclick="window.location='api/download.php?id=${id}'" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-download mr-2"></i>Download</button><button onclick="openShare(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600"><i class="bi bi-share mr-2"></i>Share</button><button onclick="renamePrompt(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-pencil mr-2"></i>Rename</button><button onclick="toggleStar(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-star mr-2"></i>Star</button>${delHtml}`;
   m.classList.remove('hidden');

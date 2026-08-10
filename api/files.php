@@ -183,11 +183,7 @@ if ($action === 'copy') {
 if ($action === 'delete') {
     $id=$_POST['id'] ?? 0; $type=$_POST['type'] ?? 'file';
     if(!$isAdmin) {
-        $ownerCol = $type==='folder' ? 'created_by' : 'uploaded_by';
-        $table = $type==='folder' ? 'folders' : 'files';
-        $chk = $pdo->prepare("SELECT id FROM $table WHERE id=? AND $ownerCol=?");
-        $chk->execute([$id, $user['id']]);
-        if(!$chk->fetch()) { http_response_code(403); echo json_encode(['error'=>'Permission denied']); exit; }
+        http_response_code(403); echo json_encode(['error'=>'Only Admin can delete']); exit;
     }
     if($type==='folder') $pdo->prepare("UPDATE folders SET deleted_at=CURRENT_TIMESTAMP WHERE id=?")->execute([$id]);
     else $pdo->prepare("UPDATE files SET deleted_at=CURRENT_TIMESTAMP WHERE id=?")->execute([$id]);
@@ -198,11 +194,7 @@ if ($action === 'delete') {
 if ($action === 'restore') {
     $id=$_POST['id'] ?? 0; $type=$_POST['type'] ?? 'file';
     if(!$isAdmin) {
-        $ownerCol = $type==='folder' ? 'created_by' : 'uploaded_by';
-        $table = $type==='folder' ? 'folders' : 'files';
-        $chk = $pdo->prepare("SELECT id FROM $table WHERE id=? AND $ownerCol=?");
-        $chk->execute([$id, $user['id']]);
-        if(!$chk->fetch()) { http_response_code(403); echo json_encode(['error'=>'Permission denied']); exit; }
+        http_response_code(403); echo json_encode(['error'=>'Only Admin can restore']); exit;
     }
     if($type==='folder') $pdo->prepare("UPDATE folders SET deleted_at=NULL WHERE id=?")->execute([$id]);
     else $pdo->prepare("UPDATE files SET deleted_at=NULL WHERE id=?")->execute([$id]);
@@ -213,11 +205,7 @@ if ($action === 'restore') {
 if ($action === 'permanent_delete') {
     $id=$_POST['id'] ?? 0; $type=$_POST['type'] ?? 'file';
     if(!$isAdmin) {
-        $ownerCol = $type==='folder' ? 'created_by' : 'uploaded_by';
-        $table = $type==='folder' ? 'folders' : 'files';
-        $chk = $pdo->prepare("SELECT id FROM $table WHERE id=? AND $ownerCol=?");
-        $chk->execute([$id, $user['id']]);
-        if(!$chk->fetch()) { http_response_code(403); echo json_encode(['error'=>'Permission denied']); exit; }
+        http_response_code(403); echo json_encode(['error'=>'Only Admin can delete permanently']); exit;
     }
     $svc=new StorageService();
     if($type==='folder'){
