@@ -1,0 +1,8 @@
+/upload/*
+!/upload/.gitkeep
+/storage/local/*
+!/storage/local/.gitkeep
+/storage/tmp/*
+!/storage/tmp/.gitkeep
+/*.sqlite
+/*.db
