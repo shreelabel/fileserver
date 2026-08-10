@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <!-- LOGIN with dark support -->
-<div id="main-login-wrapper" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4">
+<div id="main-login-wrapper" class="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 pb-16">
   <div class="w-full max-w-[960px] bg-white dark:bg-[#1a1d27] rounded-[24px] overflow-hidden shadow-2xl grid md:grid-cols-2 border dark:border-[#2a2d3a]">
     <div class="bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden">
       <div class="absolute -right-16 -top-16 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
