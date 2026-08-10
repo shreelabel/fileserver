@@ -78,8 +78,8 @@ function toggleTheme(){
 <?php if (!$user): ?>
 <!-- LAMP ANIMATION OVERLAY -->
 <div id="lamp-overlay" class="fixed inset-0 z-50 bg-[#080b12] flex items-center justify-start transition-colors duration-[1500ms] ease-in-out">
-  <div id="lamp-wrapper" class="relative ml-[2vw] lg:ml-[5vw] transition-transform duration-[1500ms] ease-in-out group" style="pointer-events: auto;">
-    <svg width="300" height="400" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" class="select-none overflow-visible">
+  <div id="lamp-wrapper" class="relative ml-[2vw] lg:ml-[5vw] transition-transform duration-[1500ms] ease-in-out group" style="pointer-events: none;">
+    <svg width="300" height="400" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" class="select-none overflow-visible" style="pointer-events: none;">
       
       <!-- Base & Stand -->
       <ellipse cx="150" cy="380" rx="70" ry="15" fill="#334155" />
@@ -109,7 +109,7 @@ function toggleTheme(){
       <!-- Pull Cord (Path for bending) -->
       <path id="pull-cord-line" d="M 150 190 Q 150 240 150 290" stroke="#cbd5e1" stroke-width="3" fill="transparent" class="group-hover:stroke-white" />
       <!-- Pull Cord Ball -->
-      <circle cx="150" cy="290" r="10" fill="#94a3b8" id="pull-cord-ball" class="group-hover:fill-white shadow-lg cursor-grab active:cursor-grabbing" />
+      <circle cx="150" cy="290" r="10" fill="#94a3b8" id="pull-cord-ball" class="group-hover:fill-white shadow-lg cursor-grab active:cursor-grabbing" style="touch-action: none; pointer-events: auto;" />
 
       <defs>
         <linearGradient id="light-grad" x1="0" y1="0" x2="0" y2="1">
@@ -201,8 +201,11 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('mousemove', onDrag);
   window.addEventListener('mouseup', endDrag);
 
-  pullBall.addEventListener('touchstart', startDrag, {passive: true});
-  window.addEventListener('touchmove', onDrag, {passive: true});
+  pullBall.addEventListener('touchstart', startDrag, {passive: false});
+  window.addEventListener('touchmove', function(e) {
+    if(isDragging) e.preventDefault();
+    onDrag(e);
+  }, {passive: false});
   window.addEventListener('touchend', endDrag);
 
   function triggerToggle() {
@@ -215,6 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lampIsOn) {
       wr.classList.remove('lamp-on');
       overlay.style.pointerEvents = 'auto'; // Block clicks to UI
+      wr.style.opacity = '1'; // Ensure it's visible if it was hidden
+      wr.style.display = 'block';
       
       setTimeout(() => {
         overlay.style.backgroundColor = '#080b12';
@@ -235,10 +240,17 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         overlay.style.backgroundColor = 'transparent';
         overlay.style.pointerEvents = 'none'; // allow clicking through to the login form
-        wr.style.pointerEvents = 'auto'; // Ensure lamp remains clickable!
+        wr.style.pointerEvents = 'none'; // Ensure lamp doesn't block UI on mobile!
         
         mainLogin.style.opacity = '1';
         mainLogin.style.pointerEvents = 'auto';
+        
+        if (window.innerWidth < 768) {
+           // On mobile, the lamp visually overlaps the form, causing WebKit to block clicks.
+           // Hide it completely after the animation finishes.
+           wr.style.opacity = '0';
+           setTimeout(() => { wr.style.display = 'none'; }, 400);
+        }
         
         setTimeout(() => {
           lampIsOn = true;
