@@ -682,7 +682,11 @@ function showCtx(e,id,type){
   e.preventDefault(); e.stopPropagation(); ctxTarget={id,type};
   const m=document.getElementById('ctxMenu');
   m.innerHTML=`<button onclick="previewFile(${id})" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-eye mr-2"></i>Preview</button><button onclick="window.location='api/download.php?id=${id}'" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-download mr-2"></i>Download</button><button onclick="openShare(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600"><i class="bi bi-share mr-2"></i>Share</button><button onclick="renamePrompt(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-pencil mr-2"></i>Rename</button><button onclick="toggleStar(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-star mr-2"></i>Star</button><div class="border-t dark:border-[#2a2d3a] my-1"></div><button onclick="deleteItem(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950 text-red-600"><i class="bi bi-trash mr-2"></i>Delete</button>`;
-  m.style.left=e.pageX+'px'; m.style.top=e.pageY+'px'; m.classList.remove('hidden');
+  m.classList.remove('hidden');
+  let x = e.pageX; let y = e.pageY;
+  if(x + m.offsetWidth > window.innerWidth) x = window.innerWidth - m.offsetWidth - 8;
+  if(y + m.offsetHeight > window.innerHeight) y = window.innerHeight - m.offsetHeight - 8;
+  m.style.left=x+'px'; m.style.top=y+'px';
 }
 document.addEventListener('click',()=>document.getElementById('ctxMenu').classList.add('hidden'));
 async function previewFile(id){
