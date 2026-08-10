@@ -649,6 +649,8 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
 <div id="uploadQueue" class="fixed bottom-4 left-4 z-40 w-[360px] space-y-2"></div>
 
 <script>
+const IS_ADMIN = <?= json_encode($isAdmin) ?>;
+const CURRENT_USER_ID = <?= json_encode($user['id'] ?? 0) ?>;
 let currentFolder=null, viewMode='grid', currentFilter='all', selected=null;
 let storageChart, typeChart, activityChart, miniChart;
 
@@ -794,11 +796,11 @@ async function loadFiles(){
   empty.classList.toggle('hidden', total!==0);
   (j.folders||[]).forEach(f=>{
     grid.innerHTML+=folderCard(f);
-    listBody.innerHTML+=`<tr class="border-t dark:border-[#2a2d3a] hover:bg-slate-50 dark:hover:bg-[#0f1117]"><td class="px-4 py-3"><button onclick="navTo(${f.id})" class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 flex items-center justify-center"><i class="bi bi-folder-fill"></i></span><span class="font-medium">${esc(f.name)}</span></button></td><td class="px-4 py-3 text-slate-500">Folder</td><td class="px-4 py-3">—</td><td class="px-4 py-3 text-slate-500">${fmtDate(f.created_at)}</td><td class="px-4 py-3">You</td><td class="px-4 py-3 text-right"><button onclick="showCtx(event,${f.id},'folder')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117]"><i class="bi bi-three-dots-vertical"></i></button></td></tr>`;
+    listBody.innerHTML+=`<tr class="border-t dark:border-[#2a2d3a] hover:bg-slate-50 dark:hover:bg-[#0f1117]"><td class="px-4 py-3"><button onclick="navTo(${f.id})" class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 flex items-center justify-center"><i class="bi bi-folder-fill"></i></span><span class="font-medium">${esc(f.name)}</span></button></td><td class="px-4 py-3 text-slate-500">Folder</td><td class="px-4 py-3">—</td><td class="px-4 py-3 text-slate-500">${fmtDate(f.created_at)}</td><td class="px-4 py-3">You</td><td class="px-4 py-3 text-right"><button onclick="showCtx(event,${f.id},'folder',${f.created_by||0})" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117]"><i class="bi bi-three-dots-vertical"></i></button></td></tr>`;
   });
   (j.files||[]).forEach(f=>{
     grid.innerHTML+=fileCard(f);
-    listBody.innerHTML+=`<tr class="border-t dark:border-[#2a2d3a] hover:bg-slate-50 dark:hover:bg-[#0f1117]"><td class="px-4 py-3"><button onclick="previewFile(${f.id})" class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-[#0f1117] flex items-center justify-center"><i class="bi ${iconFor(f.extension,f.mime_type)}"></i></span><span class="font-medium truncate max-w-[220px]">${esc(f.name)}</span></button></td><td class="px-4 py-3">${esc(f.extension||'')}</td><td class="px-4 py-3">${fmtSize(f.size)}</td><td class="px-4 py-3">${fmtDate(f.updated_at||f.created_at)}</td><td class="px-4 py-3">You</td><td class="px-4 py-3 text-right"><button onclick="showCtx(event,${f.id},'file')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117]"><i class="bi bi-three-dots-vertical"></i></button></td></tr>`;
+    listBody.innerHTML+=`<tr class="border-t dark:border-[#2a2d3a] hover:bg-slate-50 dark:hover:bg-[#0f1117]"><td class="px-4 py-3"><button onclick="previewFile(${f.id})" class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-[#0f1117] flex items-center justify-center"><i class="bi ${iconFor(f.extension,f.mime_type)}"></i></span><span class="font-medium truncate max-w-[220px]">${esc(f.name)}</span></button></td><td class="px-4 py-3">${esc(f.extension||'')}</td><td class="px-4 py-3">${fmtSize(f.size)}</td><td class="px-4 py-3">${fmtDate(f.updated_at||f.created_at)}</td><td class="px-4 py-3">You</td><td class="px-4 py-3 text-right"><button onclick="showCtx(event,${f.id},'file',${f.uploaded_by||0})" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117]"><i class="bi bi-three-dots-vertical"></i></button></td></tr>`;
   });
 }
 function folderCard(f){
@@ -814,22 +816,22 @@ function folderCard(f){
   ];
   const grad = gradients[f.id % gradients.length];
   
-  return `<div class="file-card bg-white dark:bg-[#1a1d27] rounded-[20px] border dark:border-[#2a2d3a] p-4 cursor-pointer group" onclick="navTo(${f.id})" oncontextmenu="showCtx(event,${f.id},'folder');return false">
+  return `<div class="file-card bg-white dark:bg-[#1a1d27] rounded-[20px] border dark:border-[#2a2d3a] p-4 cursor-pointer group" onclick="navTo(${f.id})" oncontextmenu="showCtx(event,${f.id},'folder',${f.created_by||0});return false">
     <div class="flex justify-between items-start">
       <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-xl shadow flex-shrink-0"><i class="bi bi-folder-fill"></i></div>
       <div class="flex items-center gap-1">
         <div class="text-[28px] font-black text-transparent bg-clip-text bg-gradient-to-br ${grad} drop-shadow-sm pr-1" title="${count} files in this folder">${count}</div>
-        <button onclick="event.stopPropagation();showCtx(event,${f.id},'folder')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117] opacity-0 group-hover:opacity-100"><i class="bi bi-three-dots-vertical text-slate-400"></i></button>
+        <button onclick="event.stopPropagation();showCtx(event,${f.id},'folder',${f.created_by||0})" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117] opacity-0 group-hover:opacity-100"><i class="bi bi-three-dots-vertical text-slate-400"></i></button>
       </div>
     </div>
     <div class="font-semibold text-sm mt-3 truncate">${esc(f.name)}</div><div class="text-xs text-slate-500 mt-1">Folder · ${timeAgo(f.created_at)}</div></div>`;
 }
 function fileCard(f){
   const isImg = ['jpg','jpeg','png','webp','gif'].includes((f.extension||'').toLowerCase());
-  return `<div class="file-card bg-white dark:bg-[#1a1d27] rounded-[20px] border dark:border-[#2a2d3a] p-4 cursor-pointer group" onclick="selectFile(${f.id})" ondblclick="previewFile(${f.id})" oncontextmenu="showCtx(event,${f.id},'file');return false" data-id="${f.id}">
+  return `<div class="file-card bg-white dark:bg-[#1a1d27] rounded-[20px] border dark:border-[#2a2d3a] p-4 cursor-pointer group" onclick="selectFile(${f.id})" ondblclick="previewFile(${f.id})" oncontextmenu="showCtx(event,${f.id},'file',${f.uploaded_by||0});return false" data-id="${f.id}">
     <div class="flex justify-between items-start"><div class="w-12 h-12 rounded-xl ${isImg?'bg-gradient-to-br from-emerald-500 to-teal-500':'bg-gradient-to-br from-indigo-500 to-violet-500'} text-white flex items-center justify-center text-xl shadow"><i class="bi ${iconFor(f.extension,f.mime_type)}"></i></div>
-      <div class="flex items-center gap-1"><button onclick="event.stopPropagation();toggleStar(${f.id},'file')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117] ${f.is_starred?'text-amber-500':'text-slate-300'}"><i class="bi ${f.is_starred?'bi-star-fill':'bi-star'}"></i></button><button onclick="event.stopPropagation();showCtx(event,${f.id},'file')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117] opacity-0 group-hover:opacity-100"><i class="bi bi-three-dots-vertical"></i></button></div></div>
-    <div class="font-semibold text-sm mt-3 truncate" title="${esc(f.name)}">${esc(f.name)}</div><div class="text-xs text-slate-500 mt-1 flex gap-2"><span>${esc((f.extension||'').toUpperCase())}</span><span>·</span><span>${fmtSize(f.size)}</span></div><div class="text-xs text-slate-400 mt-1 truncate">${timeAgo(f.updated_at||f.created_at)} · You</div></div>`;
+      <div class="flex items-center gap-1"><button onclick="event.stopPropagation();toggleStar(${f.id},'file')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117] ${f.is_starred?'text-amber-500':'text-slate-300'}"><i class="bi ${f.is_starred?'bi-star-fill':'bi-star'}"></i></button><button onclick="event.stopPropagation();showCtx(event,${f.id},'file',${f.uploaded_by||0})" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117] opacity-0 group-hover:opacity-100"><i class="bi bi-three-dots-vertical"></i></button></div></div>
+    <div class="font-semibold text-sm mt-3 truncate" title="${esc(f.name)}">${esc(f.name)}</div><div class="text-xs text-slate-500 mt-1 flex gap-2"><span>${esc((f.extension||'').toUpperCase())}</span><span>·</span><span>${fmtSize(f.size)}</span></div><div class="text-xs text-slate-400 mt-1 truncate">${timeAgo(f.updated_at||f.created_at)} · ${f.uploaded_by == CURRENT_USER_ID ? 'You' : 'Shared'}</div></div>`;
 }
 function navTo(id){ currentFolder=id; loadFiles(); }
 document.querySelectorAll('.filter-btn').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('.filter-btn').forEach(x=>{x.classList.remove('bg-slate-900','dark:bg-white','dark:text-slate-900','text-white')}); b.classList.add('bg-slate-900','dark:bg-white','dark:text-slate-900','text-white'); currentFilter=b.dataset.filter; loadFiles();}));
@@ -856,15 +858,17 @@ function openDetails(f){
       <button onclick="previewFile(${f.id})" class="border dark:border-[#2a2d3a] rounded-xl py-2.5 text-sm font-medium hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-eye"></i> Preview</button>
       <a href="api/download.php?id=${f.id}" class="bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-xl py-2.5 text-sm font-medium text-center">Download</a>
       <button onclick="renamePrompt(${f.id},'file')" class="border dark:border-[#2a2d3a] rounded-xl py-2.5 text-sm">Rename</button>
-      <button onclick="deleteItem(${f.id},'file')" class="border dark:border-[#2a2d3a] rounded-xl py-2.5 text-sm text-red-600">Delete</button>
+      ${(IS_ADMIN || f.uploaded_by == CURRENT_USER_ID || f.created_by == CURRENT_USER_ID) ? `<button onclick="deleteItem(${f.id},'file')" class="border dark:border-[#2a2d3a] rounded-xl py-2.5 text-sm text-red-600">Delete</button>` : ''}
     </div>`;
 }
 function closeDetails(){ document.getElementById('detailsPanel').classList.add('translate-x-full'); }
 let ctxTarget=null;
-function showCtx(e,id,type){
+function showCtx(e,id,type,ownerId){
   e.preventDefault(); e.stopPropagation(); ctxTarget={id,type};
   const m=document.getElementById('ctxMenu');
-  m.innerHTML=`<button onclick="previewFile(${id})" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-eye mr-2"></i>Preview</button><button onclick="window.location='api/download.php?id=${id}'" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-download mr-2"></i>Download</button><button onclick="openShare(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600"><i class="bi bi-share mr-2"></i>Share</button><button onclick="renamePrompt(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-pencil mr-2"></i>Rename</button><button onclick="toggleStar(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-star mr-2"></i>Star</button><div class="border-t dark:border-[#2a2d3a] my-1"></div><button onclick="deleteItem(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950 text-red-600"><i class="bi bi-trash mr-2"></i>Delete</button>`;
+  const canDelete = IS_ADMIN || ownerId == CURRENT_USER_ID;
+  const delHtml = canDelete ? `<div class="border-t dark:border-[#2a2d3a] my-1"></div><button onclick="deleteItem(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-red-50 dark:hover:bg-red-950 text-red-600"><i class="bi bi-trash mr-2"></i>Delete</button>` : '';
+  m.innerHTML=`<button onclick="previewFile(${id})" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-eye mr-2"></i>Preview</button><button onclick="window.location='api/download.php?id=${id}'" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-download mr-2"></i>Download</button><button onclick="openShare(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-indigo-600"><i class="bi bi-share mr-2"></i>Share</button><button onclick="renamePrompt(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-pencil mr-2"></i>Rename</button><button onclick="toggleStar(${id},'${type}')" class="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-[#0f1117]"><i class="bi bi-star mr-2"></i>Star</button>${delHtml}`;
   m.classList.remove('hidden');
   let x = e.pageX; let y = e.pageY;
   if(x + m.offsetWidth > window.innerWidth) x = window.innerWidth - m.offsetWidth - 8;

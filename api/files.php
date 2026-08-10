@@ -10,6 +10,8 @@ if (!$user) { http_response_code(401); echo json_encode(['error'=>'Unauthorized'
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
+$isAdmin = false;
+try { $role = $pdo->query("SELECT role FROM users WHERE id=".(int)$user['id'])->fetchColumn(); $isAdmin = ($role==='admin'); } catch(Exception $e){}
 
 try {
 if ($action === 'list') {
@@ -180,6 +182,13 @@ if ($action === 'copy') {
 
 if ($action === 'delete') {
     $id=$_POST['id'] ?? 0; $type=$_POST['type'] ?? 'file';
+    if(!$isAdmin) {
+        $ownerCol = $type==='folder' ? 'created_by' : 'uploaded_by';
+        $table = $type==='folder' ? 'folders' : 'files';
+        $chk = $pdo->prepare("SELECT id FROM $table WHERE id=? AND $ownerCol=?");
+        $chk->execute([$id, $user['id']]);
+        if(!$chk->fetch()) { http_response_code(403); echo json_encode(['error'=>'Permission denied']); exit; }
+    }
     if($type==='folder') $pdo->prepare("UPDATE folders SET deleted_at=CURRENT_TIMESTAMP WHERE id=?")->execute([$id]);
     else $pdo->prepare("UPDATE files SET deleted_at=CURRENT_TIMESTAMP WHERE id=?")->execute([$id]);
     logActivity($pdo,'delete',$type,$id,'','Moved to trash');
@@ -188,6 +197,13 @@ if ($action === 'delete') {
 
 if ($action === 'restore') {
     $id=$_POST['id'] ?? 0; $type=$_POST['type'] ?? 'file';
+    if(!$isAdmin) {
+        $ownerCol = $type==='folder' ? 'created_by' : 'uploaded_by';
+        $table = $type==='folder' ? 'folders' : 'files';
+        $chk = $pdo->prepare("SELECT id FROM $table WHERE id=? AND $ownerCol=?");
+        $chk->execute([$id, $user['id']]);
+        if(!$chk->fetch()) { http_response_code(403); echo json_encode(['error'=>'Permission denied']); exit; }
+    }
     if($type==='folder') $pdo->prepare("UPDATE folders SET deleted_at=NULL WHERE id=?")->execute([$id]);
     else $pdo->prepare("UPDATE files SET deleted_at=NULL WHERE id=?")->execute([$id]);
     logActivity($pdo,'restore',$type,$id,'','Restored');
@@ -196,6 +212,13 @@ if ($action === 'restore') {
 
 if ($action === 'permanent_delete') {
     $id=$_POST['id'] ?? 0; $type=$_POST['type'] ?? 'file';
+    if(!$isAdmin) {
+        $ownerCol = $type==='folder' ? 'created_by' : 'uploaded_by';
+        $table = $type==='folder' ? 'folders' : 'files';
+        $chk = $pdo->prepare("SELECT id FROM $table WHERE id=? AND $ownerCol=?");
+        $chk->execute([$id, $user['id']]);
+        if(!$chk->fetch()) { http_response_code(403); echo json_encode(['error'=>'Permission denied']); exit; }
+    }
     $svc=new StorageService();
     if($type==='folder'){
         $path=buildFolderPath($pdo,$id);
