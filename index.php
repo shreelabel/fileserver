@@ -76,8 +76,182 @@ function toggleTheme(){
 <body class="bg-[#f6f7f9] dark:bg-[#0f1117] text-slate-800 dark:text-slate-100 overflow-x-hidden transition-colors duration-300">
 
 <?php if (!$user): ?>
+<!-- LAMP ANIMATION OVERLAY -->
+<div id="lamp-overlay" class="fixed inset-0 z-50 bg-[#080b12] flex items-center justify-start transition-colors duration-[1500ms] ease-in-out">
+  <div id="lamp-wrapper" class="relative ml-[2vw] lg:ml-[5vw] transition-transform duration-[1500ms] ease-in-out group" style="pointer-events: auto;">
+    <svg width="300" height="400" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg" class="select-none overflow-visible">
+      
+      <!-- Base & Stand -->
+      <ellipse cx="150" cy="380" rx="70" ry="15" fill="#334155" />
+      <rect x="140" y="190" width="20" height="190" fill="#64748b" rx="4" />
+      <circle cx="150" cy="190" r="15" fill="#475569" />
+
+      <!-- Light Beam -->
+      <polygon points="100,190 200,190 450,550 -150,550" fill="url(#light-grad)" opacity="0" id="light-beam" class="transition-opacity duration-[1500ms] pointer-events-none" />
+      
+      <!-- Lamp Shade (Green) -->
+      <path d="M 110 50 L 190 50 L 220 190 L 80 190 Z" fill="#166534" id="lamp-shade" class="transition-colors duration-700 drop-shadow-xl" />
+      
+      <!-- Base inside shade -->
+      <ellipse cx="150" cy="190" rx="70" ry="12" fill="#064e3b" id="lamp-bottom" class="transition-colors duration-700" />
+      <circle cx="150" cy="190" r="15" fill="#111" id="lamp-bulb" class="transition-colors duration-500" />
+
+      <!-- Cute Face -->
+      <g id="lamp-face" class="transition-opacity duration-300">
+        <circle cx="130" cy="130" r="5" fill="#022c22" class="lamp-eye" />
+        <circle cx="170" cy="130" r="5" fill="#022c22" class="lamp-eye" />
+        <path d="M 140 145 Q 150 160 160 145" stroke="#022c22" stroke-width="4" fill="transparent" stroke-linecap="round" />
+        <!-- Blush -->
+        <ellipse cx="115" cy="140" rx="8" ry="4" fill="#86efac" opacity="0.3" id="blush-l" class="transition-opacity duration-300" />
+        <ellipse cx="185" cy="140" rx="8" ry="4" fill="#86efac" opacity="0.3" id="blush-r" class="transition-opacity duration-300" />
+      </g>
+      
+      <!-- Pull Cord (Path for bending) -->
+      <path id="pull-cord-line" d="M 150 190 Q 150 240 150 290" stroke="#cbd5e1" stroke-width="3" fill="transparent" class="group-hover:stroke-white" />
+      <!-- Pull Cord Ball -->
+      <circle cx="150" cy="290" r="10" fill="#94a3b8" id="pull-cord-ball" class="group-hover:fill-white shadow-lg cursor-grab active:cursor-grabbing" />
+
+      <defs>
+        <linearGradient id="light-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(74, 222, 128, 0.45)" />
+          <stop offset="100%" stop-color="rgba(74, 222, 128, 0)" />
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="absolute top-[410px] w-full text-center text-slate-400 text-xs font-mono tracking-[0.2em] uppercase animate-pulse select-none" id="pull-text">Pull Me</div>
+  </div>
+</div>
+
+<style>
+@keyframes lampBlink {
+  0%, 96% { transform: scaleY(1); }
+  98% { transform: scaleY(0.1); }
+  100% { transform: scaleY(1); }
+}
+.lamp-eye { transform-origin: center; animation: lampBlink 4s infinite; }
+
+/* States */
+.lamp-on #light-beam { opacity: 1; }
+.lamp-on #lamp-shade { fill: #22c55e; }
+.lamp-on #lamp-bottom { fill: #15803d; }
+.lamp-on #lamp-bulb { fill: #fff; filter: drop-shadow(0 0 15px #fff); }
+.lamp-on #lamp-face circle { fill: #064e3b; }
+.lamp-on #lamp-face path { stroke: #064e3b; }
+.lamp-on #blush-l, .lamp-on #blush-r { opacity: 0.7; }
+
+#main-login-wrapper { opacity: 0; pointer-events: none; transition: opacity 1.5s ease-out; }
+</style>
+
+<script>
+let lampIsOn = false;
+let isAnimating = false;
+let isDragging = false;
+let startY = 0;
+let currentY = 0;
+const baseY = 290;
+const maxPull = 50; // max px to pull down
+
+document.addEventListener('DOMContentLoaded', () => {
+  const pullBall = document.getElementById('pull-cord-ball');
+  const pullLine = document.getElementById('pull-cord-line');
+  const pullText = document.getElementById('pull-text');
+  const wr = document.getElementById('lamp-wrapper');
+  const overlay = document.getElementById('lamp-overlay');
+  const mainLogin = document.getElementById('main-login-wrapper');
+
+  function updateCord(dy) {
+    pullBall.setAttribute('cy', baseY + dy);
+    pullLine.setAttribute('d', `M 150 190 Q ${150 - dy*0.8} ${240 + dy*0.5} 150 ${baseY + dy}`);
+  }
+
+  function startDrag(e) {
+    if(isAnimating) return;
+    isDragging = true;
+    startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    pullBall.style.transition = 'none';
+    pullLine.style.transition = 'none';
+  }
+
+  function onDrag(e) {
+    if(!isDragging) return;
+    const y = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+    let dy = y - startY;
+    if(dy < 0) dy = 0;
+    if(dy > maxPull) dy = maxPull;
+    currentY = dy;
+    updateCord(dy);
+  }
+
+  function endDrag(e) {
+    if(!isDragging) return;
+    isDragging = false;
+    
+    pullBall.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+    pullLine.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+    
+    if(currentY > 20) {
+      triggerToggle();
+    } else {
+      updateCord(0);
+    }
+    currentY = 0;
+  }
+
+  pullBall.addEventListener('mousedown', startDrag);
+  window.addEventListener('mousemove', onDrag);
+  window.addEventListener('mouseup', endDrag);
+
+  pullBall.addEventListener('touchstart', startDrag, {passive: true});
+  window.addEventListener('touchmove', onDrag, {passive: true});
+  window.addEventListener('touchend', endDrag);
+
+  function triggerToggle() {
+    if (isAnimating) return;
+    isAnimating = true;
+    
+    pullText.style.opacity = '0';
+    updateCord(0); // snap back visual
+    
+    if (lampIsOn) {
+      wr.classList.remove('lamp-on');
+      overlay.style.pointerEvents = 'auto'; // Block clicks to UI
+      
+      setTimeout(() => {
+        overlay.style.backgroundColor = '#080b12';
+        mainLogin.style.opacity = '0';
+        mainLogin.style.pointerEvents = 'none';
+        
+        setTimeout(() => {
+          pullText.textContent = "Pull to Turn On";
+          pullText.style.opacity = '1';
+          lampIsOn = false;
+          isAnimating = false;
+        }, 1500); // Wait for bg color
+      }, 200);
+      
+    } else {
+      wr.classList.add('lamp-on');
+      
+      setTimeout(() => {
+        overlay.style.backgroundColor = 'transparent';
+        overlay.style.pointerEvents = 'none'; // allow clicking through to the login form
+        wr.style.pointerEvents = 'auto'; // Ensure lamp remains clickable!
+        
+        mainLogin.style.opacity = '1';
+        mainLogin.style.pointerEvents = 'auto';
+        
+        setTimeout(() => {
+          lampIsOn = true;
+          isAnimating = false;
+        }, 400);
+      }, 400);
+    }
+  }
+});
+</script>
+
 <!-- LOGIN with dark support -->
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4">
+<div id="main-login-wrapper" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4">
   <div class="w-full max-w-[960px] bg-white dark:bg-[#1a1d27] rounded-[24px] overflow-hidden shadow-2xl grid md:grid-cols-2 border dark:border-[#2a2d3a]">
     <div class="bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden">
       <div class="absolute -right-16 -top-16 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
@@ -92,7 +266,6 @@ function toggleTheme(){
           <div class="flex items-center gap-2"><i class="bi bi-layers"></i> Local Storage · Phase 1</div>
         </div>
       </div>
-      <div class="mt-8 text-xs text-indigo-200">© 2026 FileServer Enterprise</div>
     </div>
     <div class="p-8 md:p-10 dark:bg-[#1a1d27]">
       <div class="flex justify-between items-center">
@@ -100,14 +273,15 @@ function toggleTheme(){
         <button onclick="toggleTheme()" class="w-9 h-9 rounded-xl border dark:border-[#2a2d3a] flex items-center justify-center"><i class="bi bi-moon"></i></button>
       </div>
       <form id="loginForm" class="mt-8 space-y-4">
-        <div><label class="text-sm font-medium">Email</label><input name="email" value="admin@company.com" class="mt-1 w-full border dark:border-[#2a2d3a] dark:bg-[#0f1117] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="admin@company.com"></div>
-        <div><label class="text-sm font-medium">Password</label><input name="password" type="password" value="admin123" class="mt-1 w-full border dark:border-[#2a2d3a] dark:bg-[#0f1117] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••"></div>
-        <div class="text-xs text-slate-500 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2"><b>Demo:</b> admin@company.com / admin123</div>
+        <div><label class="text-sm font-medium">Email</label><input name="email" class="mt-1 w-full border dark:border-[#2a2d3a] dark:bg-[#0f1117] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your email"></div>
+        <div><label class="text-sm font-medium">Password</label><input name="password" type="password" class="mt-1 w-full border dark:border-[#2a2d3a] dark:bg-[#0f1117] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••"></div>
         <button class="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-black dark:hover:bg-indigo-700 text-white rounded-xl py-3 font-medium transition">Sign in →</button>
         <div id="loginErr" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></div>
       </form>
-      <div class="mt-6 text-xs text-slate-400 text-center">Storage: <span class="mono bg-slate-100 dark:bg-[#0f1117] px-2 py-1 rounded"><?=$storageCfg['driver']?></span></div>
     </div>
+  </div>
+  <div class="absolute bottom-6 left-0 w-full text-center text-[11px] text-slate-400 dark:text-slate-500 font-mono tracking-tight">
+    @Sheree Label Creation 2026 || @Developed by Mriganka B Debnath
   </div>
 </div>
 <script>
@@ -174,6 +348,9 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
         <img src="https://i.pravatar.cc/100?img=32" class="w-9 h-9 rounded-full object-cover">
         <div class="flex-1 min-w-0"><div class="text-sm font-medium truncate"><?=htmlspecialchars($user['name'])?></div><div class="text-xs text-slate-500 truncate"><?=htmlspecialchars($user['email'])?></div></div>
         <button onclick="logout()" class="w-8 h-8 rounded-lg border dark:border-[#2a2d3a] flex items-center justify-center text-slate-500 hover:bg-slate-50 dark:hover:bg-[#25293e]"><i class="bi bi-box-arrow-right"></i></button>
+      </div>
+      <div class="pt-2 text-center text-[10px] text-slate-400 dark:text-slate-500 font-mono tracking-tight leading-relaxed">
+        @Sheree Label Creation 2026 <br> @Developed by Mriganka B Debnath
       </div>
     </div>
   </aside>
@@ -285,6 +462,7 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
           <div class="flex items-center gap-2 ml-auto flex-wrap">
             <select id="sortBy" class="border dark:border-[#2a2d3a] dark:bg-[#1a1d27] rounded-xl px-3 py-2 text-sm bg-white"><option value="name">Sort: Name</option><option value="date">Sort: Date</option><option value="size">Sort: Size</option><option value="type">Sort: Type</option></select>
             <select id="sortOrder" class="border dark:border-[#2a2d3a] dark:bg-[#1a1d27] rounded-xl px-3 py-2 text-sm bg-white"><option value="ASC">Asc</option><option value="DESC">Desc</option></select>
+            <select id="dateFilter" class="border dark:border-[#2a2d3a] dark:bg-[#1a1d27] rounded-xl px-3 py-2 text-sm bg-white"><option value="all">Any time</option><option value="today">Today</option><option value="7days">Last 7 days</option><option value="30days">Last 30 days</option></select>
             <div class="flex items-center gap-1 p-1 bg-white dark:bg-[#1a1d27] border dark:border-[#2a2d3a] rounded-xl">
               <button data-filter="all" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-white dark:text-slate-900 text-white text-sm">All</button>
               <button data-filter="images" class="filter-btn px-3 py-1.5 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-[#0f1117]">Images</button>
@@ -498,6 +676,7 @@ function filterCat(c){ currentFilter=c; loadFiles(); }
 document.getElementById('globalSearch').addEventListener('input', debounce(()=>loadFiles(),300));
 document.getElementById('sortBy').addEventListener('change',()=>loadFiles());
 document.getElementById('sortOrder').addEventListener('change',()=>loadFiles());
+document.getElementById('dateFilter').addEventListener('change',()=>loadFiles());
 
 function toast(msg, type='success'){
   const w=document.getElementById('toastWrap');
@@ -593,13 +772,15 @@ function iconFor(ext,mime){
 }
 function esc(s){return (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function timeAgo(d){ if(!d) return ''; const diff=(Date.now()-new Date(d.replace(' ','T')))/1000; if(diff<60) return 'just now'; if(diff<3600) return Math.floor(diff/60)+'m ago'; if(diff<86400) return Math.floor(diff/3600)+'h ago'; return Math.floor(diff/86400)+'d ago'; }
+function fmtDate(d){ if(!d) return ''; const dt=new Date(d.replace(' ','T')); return dt.toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function fmtSize(b){ if(b<1024) return b+' B'; if(b<1024*1024) return (b/1024).toFixed(1)+' KB'; if(b<1024*1024*1024) return (b/1024/1024).toFixed(1)+' MB'; return (b/1024/1024/1024).toFixed(2)+' GB'; }
 
 async function loadFiles(){
   const q=document.getElementById('globalSearch').value;
   const sort=document.getElementById('sortBy').value;
   const order=document.getElementById('sortOrder').value;
-  const params=new URLSearchParams({action:'list', folder_id: currentFolder||'root', q, filter: currentFilter, sort, order});
+  const dateFilter=document.getElementById('dateFilter').value;
+  const params=new URLSearchParams({action:'list', folder_id: currentFolder||'root', q, filter: currentFilter, sort, order, dateFilter});
   const r=await fetch('api/files.php?'+params); const j=await r.json();
   const br=await fetch('api/files.php?action=breadcrumb&folder_id='+(currentFolder||'root')).then(x=>x.json());
   const bc=document.getElementById('breadcrumb');
@@ -613,11 +794,11 @@ async function loadFiles(){
   empty.classList.toggle('hidden', total!==0);
   (j.folders||[]).forEach(f=>{
     grid.innerHTML+=folderCard(f);
-    listBody.innerHTML+=`<tr class="border-t dark:border-[#2a2d3a] hover:bg-slate-50 dark:hover:bg-[#0f1117]"><td class="px-4 py-3"><button onclick="navTo(${f.id})" class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 flex items-center justify-center"><i class="bi bi-folder-fill"></i></span><span class="font-medium">${esc(f.name)}</span></button></td><td class="px-4 py-3 text-slate-500">Folder</td><td class="px-4 py-3">—</td><td class="px-4 py-3 text-slate-500">${timeAgo(f.created_at)}</td><td class="px-4 py-3">You</td><td class="px-4 py-3 text-right"><button onclick="showCtx(event,${f.id},'folder')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117]"><i class="bi bi-three-dots-vertical"></i></button></td></tr>`;
+    listBody.innerHTML+=`<tr class="border-t dark:border-[#2a2d3a] hover:bg-slate-50 dark:hover:bg-[#0f1117]"><td class="px-4 py-3"><button onclick="navTo(${f.id})" class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-600 flex items-center justify-center"><i class="bi bi-folder-fill"></i></span><span class="font-medium">${esc(f.name)}</span></button></td><td class="px-4 py-3 text-slate-500">Folder</td><td class="px-4 py-3">—</td><td class="px-4 py-3 text-slate-500">${fmtDate(f.created_at)}</td><td class="px-4 py-3">You</td><td class="px-4 py-3 text-right"><button onclick="showCtx(event,${f.id},'folder')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117]"><i class="bi bi-three-dots-vertical"></i></button></td></tr>`;
   });
   (j.files||[]).forEach(f=>{
     grid.innerHTML+=fileCard(f);
-    listBody.innerHTML+=`<tr class="border-t dark:border-[#2a2d3a] hover:bg-slate-50 dark:hover:bg-[#0f1117]"><td class="px-4 py-3"><button onclick="previewFile(${f.id})" class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-[#0f1117] flex items-center justify-center"><i class="bi ${iconFor(f.extension,f.mime_type)}"></i></span><span class="font-medium truncate max-w-[220px]">${esc(f.name)}</span></button></td><td class="px-4 py-3">${esc(f.extension||'')}</td><td class="px-4 py-3">${fmtSize(f.size)}</td><td class="px-4 py-3">${timeAgo(f.updated_at||f.created_at)}</td><td class="px-4 py-3">You</td><td class="px-4 py-3 text-right"><button onclick="showCtx(event,${f.id},'file')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117]"><i class="bi bi-three-dots-vertical"></i></button></td></tr>`;
+    listBody.innerHTML+=`<tr class="border-t dark:border-[#2a2d3a] hover:bg-slate-50 dark:hover:bg-[#0f1117]"><td class="px-4 py-3"><button onclick="previewFile(${f.id})" class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-[#0f1117] flex items-center justify-center"><i class="bi ${iconFor(f.extension,f.mime_type)}"></i></span><span class="font-medium truncate max-w-[220px]">${esc(f.name)}</span></button></td><td class="px-4 py-3">${esc(f.extension||'')}</td><td class="px-4 py-3">${fmtSize(f.size)}</td><td class="px-4 py-3">${fmtDate(f.updated_at||f.created_at)}</td><td class="px-4 py-3">You</td><td class="px-4 py-3 text-right"><button onclick="showCtx(event,${f.id},'file')" class="w-8 h-8 rounded-lg hover:bg-slate-100 dark:hover:bg-[#0f1117]"><i class="bi bi-three-dots-vertical"></i></button></td></tr>`;
   });
 }
 function folderCard(f){

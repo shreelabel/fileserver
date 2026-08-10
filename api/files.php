@@ -19,6 +19,7 @@ if ($action === 'list') {
     $sort = $_GET['sort'] ?? 'name';
     $order = strtoupper($_GET['order'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
     $view = $_GET['view'] ?? 'grid';
+    $dateFilter = $_GET['dateFilter'] ?? 'all';
 
     $allowedSort = ['name'=>'name','size'=>'size','date'=>'created_at','type'=>'extension','modified'=>'updated_at'];
     $sortCol = $allowedSort[$sort] ?? 'name';
@@ -29,6 +30,9 @@ if ($action === 'list') {
     if ($folderId === null || $folderId === '' || $folderId === 'root') { $fSql .= "f.parent_id IS NULL"; }
     else { $fSql .= "f.parent_id=?"; $fParams[] = $folderId; }
     if ($search !== '') { $fSql .= " AND f.name LIKE ?"; $fParams[] = "%$search%"; }
+    if ($dateFilter === 'today') { $fSql .= " AND date(f.created_at) >= date('now')"; }
+    else if ($dateFilter === '7days') { $fSql .= " AND f.created_at >= datetime('now', '-7 days')"; }
+    else if ($dateFilter === '30days') { $fSql .= " AND f.created_at >= datetime('now', '-30 days')"; }
     $fSql .= " ORDER BY f.name ASC";
     $stmt = $pdo->prepare($fSql);
     $stmt->execute($fParams);
@@ -41,6 +45,9 @@ if ($action === 'list') {
     if ($folderId === null || $folderId === '' || $folderId === 'root') $sql .= "f.folder_id IS NULL";
     else { $sql .= "f.folder_id=?"; $params[]=$folderId; }
     if ($search !== '') { $sql .= " AND f.name LIKE ?"; $params[]="%$search%"; }
+    if ($dateFilter === 'today') { $sql .= " AND date(f.created_at) >= date('now')"; }
+    else if ($dateFilter === '7days') { $sql .= " AND f.created_at >= datetime('now', '-7 days')"; }
+    else if ($dateFilter === '30days') { $sql .= " AND f.created_at >= datetime('now', '-30 days')"; }
     // filter
     $filterMap = [
         'images'=>["mime_type LIKE ?","image/%"],

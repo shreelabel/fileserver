@@ -62,9 +62,9 @@ function ensureSeed(PDO $pdo) {
         $cnt = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
     } catch(Exception $e){ return; }
     if ($cnt == 0) {
-        $hash = password_hash('admin123', PASSWORD_DEFAULT);
+        $hash = password_hash('gm.shreelabel@gmail.com', PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("INSERT INTO users (name,email,password) VALUES (?,?,?)");
-        $stmt->execute(['Admin User', 'admin@company.com', $hash]);
+        $stmt->execute(['Admin User', 'gm.shreelabel@gmail.com', $hash]);
         $adminId = $pdo->lastInsertId();
         $folders = ['Artwork','Plate Files','Customer Documents','Job Documents','Production Documents'];
         foreach ($folders as $f) {
@@ -74,7 +74,7 @@ function ensureSeed(PDO $pdo) {
         $pdo->prepare("INSERT INTO activity_logs (user_id,action,target_type,target_name) VALUES (?,?,?,?)")->execute([$adminId,'create','system','File Server initialized']);
         // ensure admin role
         try { $pdo->exec("UPDATE users SET role='admin' WHERE id=$adminId"); } catch(Exception $e) {}
-        try { $pdo->exec("UPDATE users SET role='admin' WHERE email='admin@company.com'"); } catch(Exception $e) {}
+        try { $pdo->exec("UPDATE users SET role='admin' WHERE email='gm.shreelabel@gmail.com'"); } catch(Exception $e) {}
     } else {
         // ensure admin password is admin123 if user complains about invalid password - only if explicitly requested via fix-login.php
         // do not auto-reset to avoid overwriting custom passwords
